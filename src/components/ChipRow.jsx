@@ -1,5 +1,4 @@
-export default function ChipRow({ options, value, onChange, labels }) {
-  return (
+const ChipRow = ({ options, value, onChange, labels }) => (
     <div className="chip-row">
       {options.map((opt) => (
         <div
@@ -12,4 +11,5 @@ export default function ChipRow({ options, value, onChange, labels }) {
       ))}
     </div>
   )
-}
+  
+export default ChipRow
