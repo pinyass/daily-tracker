@@ -9,7 +9,7 @@ const nowHHMM = () => {
   return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
 }
 
-function sleepDuration(sleptAt, wokeAt) {
+const sleepDuration = (sleptAt, wokeAt) => {
   if (!sleptAt || !wokeAt) return 'Fill both times to see total sleep'
   const [ah, am] = sleptAt.split(':').map(Number)
   const [bh, bm] = wokeAt.split(':').map(Number)
@@ -34,7 +34,7 @@ const emptyEntry = (date) => ({
   positives: '',
 })
 
-export default function DailyLog({ toast }) {
+const DailyLog = ({ toast }) => {
   const [date, setDate] = useState(todayStr())
   const [entry, setEntry] = useState(emptyEntry(todayStr()))
 
@@ -151,3 +151,5 @@ export default function DailyLog({ toast }) {
     </div>
   )
 }
+
+export default DailyLog
