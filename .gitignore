@@ -39,3 +39,10 @@ coverage
 # GitHub Copilot instructions
 .github/instructions/
 .github/copilot-instructions.md
+
+# BMAD
+_bmad/
+_bmad-output/
+
+# Claude Code
+.claude/
