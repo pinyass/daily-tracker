@@ -1,15 +1,18 @@
+import { Chip, Stack } from '@mui/material'
+
 const ChipRow = ({ options, value, onChange, labels }) => (
-    <div className="chip-row">
-      {options.map((opt) => (
-        <div
-          key={opt}
-          className={'chip' + (value === opt ? ' active' : '')}
-          onClick={() => onChange(opt)}
-        >
-          {labels?.[opt] ?? opt}
-        </div>
-      ))}
-    </div>
-  )
-  
+  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+    {options.map((opt) => (
+      <Chip
+        key={opt}
+        label={labels?.[opt] ?? opt}
+        variant={value === opt ? 'filled' : 'outlined'}
+        color={value === opt ? 'primary' : 'default'}
+        onClick={() => onChange(opt)}
+        sx={{ height: 32, fontWeight: 500 }}
+      />
+    ))}
+  </Stack>
+)
+
 export default ChipRow

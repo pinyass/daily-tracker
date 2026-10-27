@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
+import {
+  Card, CardContent, Typography, TextField, InputAdornment, IconButton,
+  Button, Box, Stack, Grid, FormControlLabel, Checkbox, Divider, Tooltip
+} from '@mui/material'
+import { AccessTime, Add, CheckCircle, ExpandMore, ExpandLess } from '@mui/icons-material'
 import ChipRow from './ChipRow.jsx'
-import { SUPPLEMENTS, WATER_OPTIONS, WORKOUT_OPTIONS, DIET_OPTIONS, WALK_OPTIONS, CAFFEINE_OPTIONS } from '../data/plan.js'
+import {
+  SUPPLEMENTS, WATER_OPTIONS, WORKOUT_OPTIONS, DIET_OPTIONS, WALK_OPTIONS, CAFFEINE_OPTIONS
+} from '../data/plan.js'
 import * as store from '../lib/storage.js'
 
 const todayStr = () => new Date().toISOString().slice(0, 10)
@@ -37,6 +44,11 @@ const emptyEntry = (date) => ({
 const DailyLog = ({ toast }) => {
   const [date, setDate] = useState(todayStr())
   const [entry, setEntry] = useState(emptyEntry(todayStr()))
+  const [expandedSections, setExpandedSections] = useState({
+    supplements: true,
+    activities: true,
+    positives: true,
+  })
 
   useEffect(() => {
     store.get('daily:' + date).then((saved) => {
@@ -66,89 +78,304 @@ const DailyLog = ({ toast }) => {
     toast('Saved ' + date)
   }
 
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }))
+  }
+
   return (
-    <div>
-      <div className="card">
-        <h2>Date</h2>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-      </div>
+    <Stack spacing={2} sx={{ width: '100%' }}>
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>Date</Typography>
+          <TextField
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            fullWidth
+            InputLabelProps={{ shrink: true }}
+            size="small"
+          />
+        </CardContent>
+      </Card>
 
-      <div className="card">
-        <h2>Body & activity</h2>
-        <label>Weight (kg)</label>
-        <input type="number" step="0.1" placeholder="e.g. 86.2" value={entry.weight}
-          onChange={(e) => patch({ weight: e.target.value })} />
-        <label>Steps</label>
-        <input type="number" placeholder="e.g. 8500" value={entry.steps}
-          onChange={(e) => patch({ steps: e.target.value })} />
-        <label>Water</label>
-        <ChipRow options={WATER_OPTIONS} value={entry.water} onChange={(v) => patch({ water: v })} />
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="h6">Body & Activity</Typography>
+          </Box>
+          <Grid container spacing={2} columns={12}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Weight (kg)"
+                type="number"
+                step="0.1"
+                placeholder="e.g. 86.2"
+                value={entry.weight}
+                onChange={(e) => patch({ weight: e.target.value })}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Steps"
+                type="number"
+                placeholder="e.g. 8500"
+                value={entry.steps}
+                onChange={(e) => patch({ steps: e.target.value })}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>Water</Typography>
+              <ChipRow
+                options={WATER_OPTIONS}
+                value={entry.water}
+                onChange={(v) => patch({ water: v })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>Sleep</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Slept at"
+                    type="time"
+                    value={entry.sleptAt}
+                    onChange={(e) => patch({ sleptAt: e.target.value })}
+                    fullWidth
+                    size="small"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => patch({ sleptAt: nowHHMM() })}
+                            aria-label="Set to now"
+                            sx={{ p: 0 }}
+                          >
+                            <AccessTime fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Woke at"
+                    type="time"
+                    value={entry.wokeAt}
+                    onChange={(e) => patch({ wokeAt: e.target.value })}
+                    fullWidth
+                    size="small"
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => patch({ wokeAt: nowHHMM() })}
+                            aria-label="Set to now"
+                            sx={{ p: 0 }}
+                          >
+                            <AccessTime fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              </Grid>
+              {entry.sleptAt && entry.wokeAt && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {sleepDuration(entry.sleptAt, entry.wokeAt)}
+                </Typography>
+              )}
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>Workout</Typography>
+              <ChipRow
+                options={WORKOUT_OPTIONS}
+                value={entry.workout}
+                onChange={(v) => patch({ workout: v })}
+                labels={{ No: 'No (missed)' }}
+              />
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-        <label>Sleep</label>
-        <div className="time-row">
-          <div className="time-field">
-            <span className="tf-label">Slept at</span>
-            <input type="time" value={entry.sleptAt} onChange={(e) => patch({ sleptAt: e.target.value })} />
-            <button type="button" className="now-btn" onClick={() => patch({ sleptAt: nowHHMM() })}>Now</button>
-          </div>
-          <div className="time-field">
-            <span className="tf-label">Woke at</span>
-            <input type="time" value={entry.wokeAt} onChange={(e) => patch({ wokeAt: e.target.value })} />
-            <button type="button" className="now-btn" onClick={() => patch({ wokeAt: nowHHMM() })}>Now</button>
-          </div>
-        </div>
-        <div className="hint">{sleepDuration(entry.sleptAt, entry.wokeAt)}</div>
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="h6">Diet</Typography>
+          </Box>
+          <ChipRow
+            options={DIET_OPTIONS}
+            value={entry.diet}
+            onChange={(v) => patch({ diet: v })}
+            labels={{ 'Yes - as per plan': 'As per plan', 'No - mentioned deviations': 'Deviated' }}
+          />
+          {entry.diet === 'No - mentioned deviations' && (
+            <TextField
+              label="What happened"
+              multiline
+              rows={3}
+              placeholder="e.g. had a slice of cake at a birthday"
+              value={entry.deviations}
+              onChange={(e) => patch({ deviations: e.target.value })}
+              fullWidth
+              size="small"
+              sx={{ mt: 2 }}
+            />
+          )}
+        </CardContent>
+      </Card>
 
-        <label>Workout</label>
-        <ChipRow options={WORKOUT_OPTIONS} value={entry.workout} onChange={(v) => patch({ workout: v })}
-          labels={{ No: 'No (missed)' }} />
-      </div>
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="h6">Supplements Taken</Typography>
+            <Tooltip title={expandedSections.supplements ? 'Collapse' : 'Expand'}>
+              <IconButton size="small" onClick={() => toggleSection('supplements')}>
+                {expandedSections.supplements ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+          {expandedSections.supplements && (
+            <Stack spacing={1.5} sx={{ mt: 1 }}>
+              {SUPPLEMENTS.map((s) => (
+                <Box
+                  key={s.n}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    p: 1,
+                    borderRadius: 1,
+                    bgcolor: entry.supplementTimes[s.n] ? 'action.hover' : 'transparent',
+                    border: entry.supplementTimes[s.n] ? '1px solid' : 'none',
+                    borderColor: 'primary.main',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body1" fontWeight={600} color={entry.supplementTimes[s.n] ? 'primary.main' : 'text.primary'}>
+                      {s.n}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {s.hint}
+                    </Typography>
+                  </Box>
+                  <TextField
+                    type="time"
+                    value={entry.supplementTimes[s.n] || ''}
+                    onChange={(e) => setSupplementTime(s.n, e.target.value)}
+                    size="small"
+                    sx={{ width: 110 }}
+                    InputProps={{
+                      inputProps: { step: 60 },
+                    }}
+                  />
+                  <Tooltip title="Set to now">
+                    <IconButton
+                      size="small"
+                      onClick={() => setSupplementNow(s.n)}
+                      aria-label={`Set ${s.n} to now`}
+                      sx={{ p: 0, minWidth: 36 }}
+                    >
+                      <AccessTime fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              ))}
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                Tap the clock icon the moment you take each one — or set the time manually. Leave blank if skipped.
+              </Typography>
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="card">
-        <h2>Diet</h2>
-        <ChipRow options={DIET_OPTIONS} value={entry.diet} onChange={(v) => patch({ diet: v })}
-          labels={{ 'Yes - as per plan': 'As per plan', 'No - mentioned deviations': 'Deviated' }} />
-        {entry.diet === 'No - mentioned deviations' && (
-          <>
-            <label>What happened</label>
-            <textarea placeholder="e.g. had a slice of cake at a birthday" value={entry.deviations}
-              onChange={(e) => patch({ deviations: e.target.value })} />
-          </>
-        )}
-      </div>
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="h6">Other Activities</Typography>
+            <Tooltip title={expandedSections.activities ? 'Collapse' : 'Expand'}>
+              <IconButton size="small" onClick={() => toggleSection('activities')}>
+                {expandedSections.activities ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+          {expandedSections.activities && (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Post-meal walks (10 min each, target 3)
+                </Typography>
+                <ChipRow
+                  options={WALK_OPTIONS}
+                  value={entry.walks}
+                  onChange={(v) => patch({ walks: v })}
+                />
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Coffee / tea (max 2)
+                </Typography>
+                <ChipRow
+                  options={CAFFEINE_OPTIONS}
+                  value={entry.caffeine}
+                  onChange={(v) => patch({ caffeine: v })}
+                />
+              </Box>
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="card">
-        <h2>Supplements taken</h2>
-        {SUPPLEMENTS.map((s) => (
-          <div key={s.n} className={'supp-item' + (entry.supplementTimes[s.n] ? ' logged' : '')}>
-            <div className="supp-info">
-              <div className="supp-name">{s.n}</div>
-              <div className="supp-hint">{s.hint}</div>
-            </div>
-            <input type="time" className="supp-time" value={entry.supplementTimes[s.n] || ''}
-              onChange={(e) => setSupplementTime(s.n, e.target.value)} />
-            <button type="button" className="supp-now" onClick={() => setSupplementNow(s.n)}>Now</button>
-          </div>
-        ))}
-        <div className="hint">Tap "Now" the moment you take each one — or set the time manually. Leave blank if skipped.</div>
-      </div>
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="h6">
+              Two Good Things Today
+              <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1, fontWeight: 400, textTransform: 'none' }}>
+                (optional)
+              </Typography>
+            </Typography>
+            <Tooltip title={expandedSections.positives ? 'Collapse' : 'Expand'}>
+              <IconButton size="small" onClick={() => toggleSection('positives')}>
+                {expandedSections.positives ? <ExpandLess /> : <ExpandMore />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+          {expandedSections.positives && (
+            <TextField
+              multiline
+              rows={3}
+              placeholder="Anything at all..."
+              value={entry.positives}
+              onChange={(e) => patch({ positives: e.target.value })}
+              fullWidth
+              size="small"
+              sx={{ mt: 1 }}
+            />
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="card">
-        <h2>Other activities</h2>
-        <label>Post-meal walks (10 min each, target 3)</label>
-        <ChipRow options={WALK_OPTIONS} value={entry.walks} onChange={(v) => patch({ walks: v })} />
-        <label>Coffee / tea (max 2)</label>
-        <ChipRow options={CAFFEINE_OPTIONS} value={entry.caffeine} onChange={(v) => patch({ caffeine: v })} />
-      </div>
-
-      <div className="card">
-        <h2>Two good things today <span style={{ textTransform: 'none', color: 'var(--muted)' }}>(optional)</span></h2>
-        <textarea placeholder="Anything at all..." value={entry.positives}
-          onChange={(e) => patch({ positives: e.target.value })} />
-      </div>
-
-      <button className="save-btn" onClick={save}>Save today's log</button>
-    </div>
+      <Button
+        variant="contained"
+        size="large"
+        fullWidth
+        onClick={save}
+        startIcon={<CheckCircle />}
+        sx={{ mt: 1, py: 1.5 }}
+      >
+        Save Today's Log
+      </Button>
+    </Stack>
   )
 }
 

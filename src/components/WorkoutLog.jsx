@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import {
+  Card, CardContent, Typography, TextField, Button, Box, Stack, Grid,
+  Chip, Tooltip, IconButton, Paper
+} from '@mui/material'
+import { FitnessCenter, ExpandMore, ExpandLess, Save, AddCircle } from '@mui/icons-material'
 import { EXERCISES } from '../data/plan.js'
 import * as store from '../lib/storage.js'
 
@@ -8,9 +13,9 @@ const DAYS = ['A', 'B', 'C', 'D', 'E']
 export default function WorkoutLog({ toast }) {
   const [date, setDate] = useState(todayStr())
   const [day, setDay] = useState(null)
-  // sets[exerciseIndex] = ['weightxreps', ...] ; cardio[exerciseIndex] = 'done text'
   const [sets, setSets] = useState({})
   const [cardio, setCardio] = useState({})
+  const [expanded, setExpanded] = useState(true)
 
   const plan = day ? EXERCISES[day] : null
 
@@ -36,56 +41,130 @@ export default function WorkoutLog({ toast }) {
   }
 
   return (
-    <div>
-      <div className="card">
-        <h2>Date</h2>
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-      </div>
-      <div className="card">
-        <h2>Workout day</h2>
-        <div className="day-select">
-          {DAYS.map((d) => (
-            <div key={d} className={'chip' + (day === d ? ' active' : '')} onClick={() => setDay(d)}>
-              Day {d}
-            </div>
-          ))}
-        </div>
-        <div className="hint">Endurance target: 8k steps every day + 20 min treadmill cardio after each session.</div>
-      </div>
+    <Stack spacing={2} sx={{ width: '100%' }}>
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>Date</Typography>
+          <TextField
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            fullWidth
+            size="small"
+            InputLabelProps={{ shrink: true }}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="h6">Workout Day</Typography>
+          </Box>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
+            {DAYS.map((d) => (
+              <Chip
+                key={d}
+                label={`Day ${d}`}
+                variant={day === d ? 'filled' : 'outlined'}
+                color={day === d ? 'primary' : 'default'}
+                onClick={() => setDay(d)}
+                sx={{ height: 36, fontWeight: 500 }}
+              />
+            ))}
+          </Stack>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+            Endurance target: 8k steps every day + 20 min treadmill cardio after each session.
+          </Typography>
+        </CardContent>
+      </Card>
 
       {plan && (
-        <div className="card">
-          <h2>{plan.note} — Day {day}</h2>
-          {plan.list.map((ex, i) => (
-            <div className="ex-item" key={i}>
-              <div className="ex-name">{ex.n}</div>
-              <div className="ex-target">
-                {ex.cardio ? `Target: ${ex.reps}` : `Target: ${ex.sets} sets × ${ex.reps} reps`}
-              </div>
-              {ex.cardio ? (
-                <div className="set-row">
-                  <span>Done</span>
-                  <input type="text" placeholder="e.g. 22 mins" value={cardio[i] || ''}
-                    onChange={(e) => setCardio((c) => ({ ...c, [i]: e.target.value }))} />
-                </div>
-              ) : (
-                Array.from({ length: ex.sets }).map((_, s) => (
-                  <div className="set-row" key={s}>
-                    <span>Set {s + 1}</span>
-                    <input type="number" placeholder="kg" value={sets[i]?.[s]?.weight || ''}
-                      onChange={(e) => setSetValue(i, s, 'weight', e.target.value)} />
-                    <span className="x">×</span>
-                    <input type="number" placeholder="reps" value={sets[i]?.[s]?.reps || ''}
-                      onChange={(e) => setSetValue(i, s, 'reps', e.target.value)} />
-                  </div>
-                ))
-              )}
-            </div>
-          ))}
-        </div>
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="h6">{plan.note} — Day {day}</Typography>
+              <Tooltip title={expanded ? 'Collapse' : 'Expand'}>
+                <IconButton size="small" onClick={() => setExpanded(!expanded)}>
+                  {expanded ? <ExpandLess /> : <ExpandMore />}
+                </IconButton>
+              </Tooltip>
+            </Box>
+            {expanded && (
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                {plan.list.map((ex, i) => (
+                  <Paper key={i} variant="outlined" sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                      <Box>
+                        <Typography variant="body1" fontWeight={600}>{ex.n}</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.2 }}>
+                          {ex.cardio ? `Target: ${ex.reps}` : `Target: ${ex.sets} sets × ${ex.reps} reps`}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {ex.cardio ? (
+                      <TextField
+                        label="Done"
+                        placeholder="e.g. 22 mins"
+                        value={cardio[i] || ''}
+                        onChange={(e) => setCardio((c) => ({ ...c, [i]: e.target.value }))}
+                        fullWidth
+                        size="small"
+                      />
+                    ) : (
+                      <Stack spacing={1}>
+                        {Array.from({ length: ex.sets }).map((_, s) => (
+                          <Grid container spacing={2} key={s} columns={12}>
+                            <Grid item xs={12} sm={3}>
+                              <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                                Set {s + 1}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                              <TextField
+                                label="Weight (kg)"
+                                type="number"
+                                placeholder="kg"
+                                value={sets[i]?.[s]?.weight || ''}
+                                onChange={(e) => setSetValue(i, s, 'weight', e.target.value)}
+                                fullWidth
+                                size="small"
+                              />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                              <TextField
+                                label="Reps"
+                                type="number"
+                                placeholder="reps"
+                                value={sets[i]?.[s]?.reps || ''}
+                                onChange={(e) => setSetValue(i, s, 'reps', e.target.value)}
+                                fullWidth
+                                size="small"
+                              />
+                            </Grid>
+                          </Grid>
+                        ))}
+                      </Stack>
+                    )}
+                  </Paper>
+                ))}
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
       )}
 
-      <button className="save-btn" onClick={save}>Save workout</button>
-    </div>
+      <Button
+        variant="contained"
+        size="large"
+        fullWidth
+        onClick={save}
+        startIcon={<Save />}
+        disabled={!day}
+        sx={{ mt: 1, py: 1.5 }}
+      >
+        Save Workout
+      </Button>
+    </Stack>
   )
 }
