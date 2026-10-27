@@ -35,3 +35,7 @@ coverage
 # Misc
 *.tgz
 .cache
+
+# GitHub Copilot instructions
+.github/instructions/
+.github/copilot-instructions.md
